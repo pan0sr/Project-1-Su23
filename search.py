@@ -98,31 +98,40 @@ def tinyMazeSearch(problem):
 
 
 
-def genericSearch(problem : SearchProblem, strat, state, actions = [],visited = []):
+# def genericSearch(problem : SearchProblem, strat, state, actions = [],visited = []): #maybe add a cost function here?
+#     strat.push((state, actions,0))
+#     while not strat.isEmpty():
+#         curr, actions, cost = strat.pop()
+#         if problem.isGoalState(curr):
+#             print(cost)
+#             return actions
+        
+#         else:
+#             if curr not in visited:
+#                 visited.append(curr)
+#                 successors = problem.getSuccessors(curr)
 
-    #Base Case
-    if problem.isGoalState(state):
-        print(actions)
-        return actions
+#                 for s in successors:
+#                         strat.push((s[0], actions + [s[1]],s[2]+cost)) #fringe has ((x,y),actions,total_cost)
     
-    strat.push((state, actions))
-    visited.append(state)
+#     return actions
 
+def genericSearch(problem : SearchProblem, strat, state, actions = []):
+    visited = []
+    strat.push((state,actions,0))
     while not strat.isEmpty():
-        curr, actions = strat.pop()
+        curr, hist, tot_cost = strat.pop()
         if problem.isGoalState(curr):
-            return actions
+            return hist
         else:
-            successors = problem.getSuccessors(curr)
-            for s in successors:
-                if s[0] not in visited:
-                    strat.push((s[0], actions + [s[1]]))
-                    visited.append(s[0])
+            if curr not in visited:
+                visited.append(curr)
+                successors = problem.getSuccessors(curr)
+                for s in successors:
+                    strat.push((s[0],hist+[s[1]],tot_cost+s[2]))
+    return False
+        
 
-    visited.remove(state)
-
-    
-    return None
 
 
 def depthFirstSearch(problem: SearchProblem):
@@ -143,8 +152,9 @@ def depthFirstSearch(problem: SearchProblem):
     start_state = problem.getStartState()
     fringe = Stack()
     acts = genericSearch(problem,fringe,start_state)
-    moves = translator(acts)
-    return  moves
+    #moves = translator(acts)
+    return  acts
+
 
 def breadthFirstSearch(problem: SearchProblem):
     """Search the shallowest nodes in the search tree first."""
@@ -152,13 +162,40 @@ def breadthFirstSearch(problem: SearchProblem):
     start_state = problem.getStartState()
     fringe = Queue()
     acts = genericSearch(problem,fringe,start_state)
-    moves = translator(acts)
-    return  moves
+    #moves = translator(acts)
+    return  acts
+
+
+def helper(problem : SearchProblem,strat,state,actions = []):
+    visited = []
+    strat.push((state,actions),0)
+    while not strat.isEmpty():
+        curr, hist = strat.pop()
+        if problem.isGoalState(curr):
+            return hist
+        else:
+            if curr not in visited:
+                visited.append(curr)
+                successors = problem.getSuccessors(curr)
+                for s in successors:
+                    strat.push((s[0],hist+[s[1]]),problem.getCostOfActions(hist+[s[1]]))
+    return False
+
+    ## use problem get cost of path up to now to update priority\
+
 
 def uniformCostSearch(problem: SearchProblem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    #Want to use priority queue with function in it?
+    #How do we take in a cost function?
+
+    start_state = problem.getStartState()
+    fringe = PriorityQueue()
+    acts = helper(problem,fringe,start_state)
+    #moves = translator(acts)
+    return  acts
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -167,10 +204,31 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
+def astarHelp(problem : SearchProblem, strat, state, heuristic, actions = []):
+    visited = []
+    strat.push((state,actions),0)
+    while not strat.isEmpty():
+        curr, hist = strat.pop()
+        if problem.isGoalState(curr):
+            return hist
+        else:
+            if curr not in visited:
+                visited.append(curr)
+                successors = problem.getSuccessors(curr)
+                for s in successors:
+                    strat.push((s[0],hist+[s[1]]),problem.getCostOfActions(hist+[s[1]])+heuristic(s[0],problem))
+    return False
+
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    ### add heuristic to priority
+
+    start_state = problem.getStartState()
+    fringe = PriorityQueue()
+    acts = astarHelp(problem,fringe,start_state,heuristic)
+    #moves = translator(acts)
+    return  acts
 
 
 # Abbreviations
