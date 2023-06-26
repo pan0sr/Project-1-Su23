@@ -18,6 +18,7 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+from util import *
 
 class SearchProblem:
     """
@@ -61,16 +62,68 @@ class SearchProblem:
         """
         util.raiseNotDefined()
 
+def translator(actions):
+    from game import Directions
+    s = Directions.SOUTH
+    w = Directions.WEST
+    n = Directions.NORTH
+    e = Directions.EAST
+    moves = []
+    for i in actions:
+        if i == 'South':
+            moves.append(s)
+        if i == 'North':
+            moves.append(n)
+        if i == 'East':
+            moves.append(e)
+        if i == 'West':
+            moves.append(w)
+    return moves
 
 def tinyMazeSearch(problem):
     """
     Returns a sequence of moves that solves tinyMaze.  For any other maze, the
     sequence of moves will be incorrect, so only use this for tinyMaze.
     """
+
+    print("Start:", problem.getStartState())
+    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
+    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
+    successors = problem.getSuccessors(problem.getStartState())
+    print(successors[0][0])
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
+
+
+
+def genericSearch(problem : SearchProblem, strat, state, actions = [],visited = []):
+
+    #Base Case
+    if problem.isGoalState(state):
+        print(actions)
+        return actions
+    
+    strat.push((state, actions))
+    visited.append(state)
+
+    while not strat.isEmpty():
+        curr, actions = strat.pop()
+        if problem.isGoalState(curr):
+            return actions
+        else:
+            successors = problem.getSuccessors(curr)
+            for s in successors:
+                if s[0] not in visited:
+                    strat.push((s[0], actions + [s[1]]))
+                    visited.append(s[0])
+
+    visited.remove(state)
+
+    
+    return None
+
 
 def depthFirstSearch(problem: SearchProblem):
     """
@@ -87,12 +140,20 @@ def depthFirstSearch(problem: SearchProblem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start_state = problem.getStartState()
+    fringe = Stack()
+    acts = genericSearch(problem,fringe,start_state)
+    moves = translator(acts)
+    return  moves
 
 def breadthFirstSearch(problem: SearchProblem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start_state = problem.getStartState()
+    fringe = Queue()
+    acts = genericSearch(problem,fringe,start_state)
+    moves = translator(acts)
+    return  moves
 
 def uniformCostSearch(problem: SearchProblem):
     """Search the node of least total cost first."""
