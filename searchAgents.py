@@ -388,7 +388,63 @@ class CornersProblem(search.SearchProblem):
         return len(actions) 
 
 
+def euclidean_dist(curr, goal):
+    x1, y1 = curr
+    x2, y2 = goal
+
+    distance = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+    return distance
+
+
 def cornersHeuristic(state: Any, problem: CornersProblem):
+    from util import manhattanDistance
+
+    def find_nearest_corner(pos):
+        closest = None
+        cdist = 9999999999
+        for i in unvisited_corners:
+            d = euclidean_dist(i,pos)
+            if d < cdist:
+                closest = i
+            return closest
+    def wallCount(grid, depth, pos):
+        x = pos[0]
+        y = pos[1]
+        count = 0
+        grid_height = len(grid)
+        grid_width = len(grid[0])
+
+        for i in range(max(0, x - depth), min(x + depth + 1, grid_height)):
+            for j in range(max(0, y - depth), min(y + depth + 1, grid_width)):
+                if grid[i][j]:
+                    count += 1
+
+        return count
+    def check_wall_in_direction(start, goal, grid):
+        x_start, y_start = start
+        x_goal, y_goal = goal
+
+        if x_goal > x_start:
+            direction = (1, 0)  # East
+        elif x_goal < x_start:
+            direction = (-1, 0)  # West
+        elif y_goal > y_start:
+            direction = (0, 1)  # South
+        else:
+            direction = (0, -1)  # North
+
+        x_next, y_next = x_start + direction[0], y_start + direction[1]
+
+        rows = len(grid)
+        cols = len(grid[0])
+
+        if 0 <= x_next < rows and 0 <= y_next < cols:
+            return grid[x_next][y_next]
+        else:
+            return False
+        
+
+
     """
     A heuristic for the CornersProblem that you defined.
 
@@ -402,11 +458,29 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     admissible (as well as consistent).
     """
     corners = problem.corners # These are the corner coordinates
-    walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    walls = problem.walls.asList() # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
+    bools = list(state[1])
+    unvisited_corners = [corners[i] for i, visited in enumerate(bools) if not visited]
+    curr_pos = state[0]
+    dist = 0
+    # start = state
+
+    for i in range(len(unvisited_corners)):  
+        next_corner = find_nearest_corner(curr_pos)   
+        calc = manhattanDistance(next_corner,curr_pos)
+        curr_pos = next_corner
+        dist += calc
     
-    return 0 # Default to trivial solution
+    return dist 
+
+    #Maybe use some other search algorithm to find path to nearest and multiply by number of unvisited
+    #above but instead add distances from nearest_corner to others?
+
+
+
+
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
