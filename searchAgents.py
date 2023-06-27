@@ -399,52 +399,18 @@ def euclidean_dist(curr, goal):
 def cornersHeuristic(state: Any, problem: CornersProblem):
     from util import manhattanDistance
 
-    def find_nearest_corner(pos):
+    def find_nearest_corner(pos, unvisited_corners, traversed):
         closest = None
-        cdist = 9999999999
-        for i in unvisited_corners:
-            d = euclidean_dist(i,pos)
-            if d < cdist:
-                closest = i
-            return closest
-    def wallCount(grid, depth, pos):
-        x = pos[0]
-        y = pos[1]
-        count = 0
-        grid_height = len(grid)
-        grid_width = len(grid[0])
+        cdist = float("inf")
+        for corner in unvisited_corners:
+            if corner not in traversed:
+                d = manhattanDistance(pos, corner)
+                if d < cdist:
+                    closest = corner
+                    cdist = d
 
-        for i in range(max(0, x - depth), min(x + depth + 1, grid_height)):
-            for j in range(max(0, y - depth), min(y + depth + 1, grid_width)):
-                if grid[i][j]:
-                    count += 1
-
-        return count
-    def check_wall_in_direction(start, goal, grid):
-        x_start, y_start = start
-        x_goal, y_goal = goal
-
-        if x_goal > x_start:
-            direction = (1, 0)  # East
-        elif x_goal < x_start:
-            direction = (-1, 0)  # West
-        elif y_goal > y_start:
-            direction = (0, 1)  # South
-        else:
-            direction = (0, -1)  # North
-
-        x_next, y_next = x_start + direction[0], y_start + direction[1]
-
-        rows = len(grid)
-        cols = len(grid[0])
-
-        if 0 <= x_next < rows and 0 <= y_next < cols:
-            return grid[x_next][y_next]
-        else:
-            return False
-        
-
-
+        return closest
+      
     """
     A heuristic for the CornersProblem that you defined.
 
@@ -466,9 +432,10 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     curr_pos = state[0]
     dist = 0
     # start = state
-
-    for i in range(len(unvisited_corners)):  
-        next_corner = find_nearest_corner(curr_pos)   
+    traversed = []
+    while (len(traversed)!=len(unvisited_corners)):  
+        next_corner = find_nearest_corner(curr_pos,unvisited_corners,traversed)   
+        traversed.append(next_corner)
         calc = manhattanDistance(next_corner,curr_pos)
         curr_pos = next_corner
         dist += calc
@@ -545,6 +512,27 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchType = FoodSearchProblem
 
 def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
+    from game import Grid
+        # def find_nearest_distance(grid,position):
+    #     x, y = position
+    #     min_distance = float('inf')
+    #     rows = grid.width
+    #     cols = grid.height
+    #     min_coords = 0
+    #     imin = 0
+    #     jmin = 0
+
+    #     for i in range(rows):
+    #         for j in range(cols):
+    #             if grid[i][j]:
+    #                 distance = abs(i - x) + abs(j - y)
+    #                 if distance < min_distance:
+    #                     min_distance = distance
+    #                     imin = i
+    #                     jmin = j              
+    #     if min_distance == float('inf'):
+    #         return (0,[0,0]) 
+    #     return (min_distance,[imin,jmin])
     """
     Your heuristic for the FoodSearchProblem goes here.
 
@@ -574,7 +562,35 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+
+    ''' Idea #1 Find furthest distance to food pellet'''
+    def find_furthest_distance(grid,position):
+        x, y = position
+        max_distance = 0
+        rows = grid.width
+        cols = grid.height
+        max_coords = 0
+        imax = 0
+        jmax = 0
+
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j]:
+                    distance = abs(i - x) + abs(j - y)
+                    if distance > max_distance:
+                        max_distance = distance
+                        imax = i
+                        jmax = j              
+
+        return (max_distance,[imax,jmax])
+    
+    furthest_distance,coords = find_furthest_distance(foodGrid, position)
+
+
+    return furthest_distance 
+
+ 
+    # return furthest_distance
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -603,11 +619,27 @@ class ClosestDotSearchAgent(SearchAgent):
         food = gameState.getFood()
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
+        
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        closestD = float('inf')
+        closestC = None
+        for i in range(food.width):
+            for j in range(food.height):
+                if food[i][j]:
+                    d_trial =  mazeDistance((i,j),gameState.getPacmanPosition(),gameState)
+                    if d_trial < closestD:
+                        closestD = d_trial
+                        closestC = (i,j)
+
+        prob = PositionSearchProblem(gameState, start=gameState.getPacmanPosition(), goal=closestC, warn=False, visualize=False)               
+        path = search.bfs(prob)
+        return path
+        
 
 class AnyFoodSearchProblem(PositionSearchProblem):
+
+
     """
     A search problem for finding a path to any food.
 
@@ -639,9 +671,19 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         complete the problem definition.
         """
         x,y = state
-
+        foodCoords = []
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        print(self.food)
+
+        for i in range(self.food.width):
+            for j in range(self.food.height):
+                if self.food[i][j]:
+                    foodCoords.append((i,j))
+        if state in foodCoords or len(foodCoords)==0:
+            return True
+        return False
+
+
 
 def mazeDistance(point1: Tuple[int, int], point2: Tuple[int, int], gameState: pacman.GameState) -> int:
     """
