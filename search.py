@@ -98,23 +98,6 @@ def tinyMazeSearch(problem):
 
 
 
-# def genericSearch(problem : SearchProblem, strat, state, actions = [],visited = []): #maybe add a cost function here?
-#     strat.push((state, actions,0))
-#     while not strat.isEmpty():
-#         curr, actions, cost = strat.pop()
-#         if problem.isGoalState(curr):
-#             print(cost)
-#             return actions
-        
-#         else:
-#             if curr not in visited:
-#                 visited.append(curr)
-#                 successors = problem.getSuccessors(curr)
-
-#                 for s in successors:
-#                         strat.push((s[0], actions + [s[1]],s[2]+cost)) #fringe has ((x,y),actions,total_cost)
-    
-#     return actions
 
 def genericSearch(problem : SearchProblem, strat, state, actions = []):
     visited = []
